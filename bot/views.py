@@ -194,4 +194,5 @@ def summ(request, convoid):
     return redirect('home')
 
 
-
+def Youtube(request):
+    return redirect('http://127.0.0.1:5005/')

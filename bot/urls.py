@@ -12,5 +12,5 @@ urlpatterns = [
     path('view_conversation/<int:convoid>/', views.view_conversation, name='view_conversation'),
     path('end-conve/<str:convoid>',views.generate_summary,name='end-convo'),
     path('summary/<str:convoid>',views.summ,name='summary'),
-
+    path('flashcards/',views.Youtube,name='flashcards'),
 ]

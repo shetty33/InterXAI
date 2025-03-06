@@ -129,15 +129,15 @@ CHANNEL_LAYERS = {
 POSTGRES_LOCALLY = env('POSTGRES_LOCALLY')
 ENVIRONMENT = env('ENVIRONMENT')
 
-if ENVIRONMENT == 'development' or POSTGRES_LOCALLY:
-    try:
-        DATABASES = {
-            'default': dj_database_url.parse(env('DATABASE_URL'))
-        }
-    except Exception as e:
-        print(f"Error connecting to PostgreSQL: {e}")
-else:
-    DATABASES = {
+# if ENVIRONMENT == 'development' or POSTGRES_LOCALLY:
+#     try:
+#         DATABASES = {
+#             'default': dj_database_url.parse(env('DATABASE_URL'))
+#         }
+#     except Exception as e:
+#         print(f"Error connecting to PostgreSQL: {e}")
+# else:
+DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
