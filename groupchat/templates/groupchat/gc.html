@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <title>SafeHaven - Group Chat</title>
+    <title>InterXAI - Group Chat</title>
     <style>
         :root {
             --primary-color: #1a73e8;
@@ -54,11 +54,16 @@
             padding: 20px;
         }
 
+        .room-creation {
+            margin-bottom: 20px;
+        }
+
         .room-item {
             padding: 12px;
             cursor: pointer;
             border-radius: 8px;
             transition: all 0.3s ease;
+            margin-bottom: 5px;
         }
 
         .room-item:hover, .room-item.active {
@@ -161,107 +166,8 @@
             border: none;
             color: var(--primary-color);
             cursor: pointer;
-        }
-
-        .video-call-container {
-            display: none;
-            position: relative;
-            height: 70%;
-            background: #000;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .video-call-container.active {
-            display: block;
-        }
-
-        .video-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 10px;
-            height: 100%;
-            padding: 10px;
-        }
-
-        .video-item {
-            position: relative;
-            border-radius: 8px;
-            overflow: hidden;
-            aspect-ratio: 16/9;
-        }
-
-        .video-item video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .video-username {
-            position: absolute;
-            bottom: 10px;
-            left: 10px;
-            background: rgba(0,0,0,0.5);
-            color: white;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-size: 0.8em;
-        }
-
-        .call-controls {
-            position: absolute;
-            bottom: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 10px;
-            background: rgba(0,0,0,0.5);
-            padding: 10px;
-            border-radius: 50px;
-        }
-
-        .call-control-button {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: none;
-            background: #444;
-            color: white;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-        }
-
-        .call-control-button:hover {
-            background: #666;
-        }
-
-        .call-control-button.red {
-            background: #e53935;
-        }
-
-        .call-control-button.red:hover {
-            background: #c62828;
-        }
-
-        .toggle-call-button {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-            margin: 10px;
-        }
-
-        .toggle-call-button:hover {
-            background-color: var(--primary-hover);
-        }
-
-        .chat-area.call-active .chat-log {
-            height: 30%;
+            font-size: 1.2rem;
+            padding: 0 10px;
         }
 
         .system-message {
@@ -271,24 +177,28 @@
             font-style: italic;
         }
 
-        .call-notification {
-            background-color: #e8f0fe;
-            color: var(--primary-color);
-            padding: 10px;
-            border-radius: 8px;
-            margin: 10px 0;
-            text-align: center;
+        .chat-header {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: bold;
+            display: flex;
+            align-items: center;
         }
 
-        .join-call-button {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 16px;
-            cursor: pointer;
-            margin-left: 10px;
-            font-size: 0.9em;
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+            opacity: 0.5;
         }
     </style>
 </head>
@@ -296,7 +206,7 @@
 
 <nav class="navbar navbar-expand-lg">
     <div class="container-fluid">
-        <a class="navbar-brand" href="#">SafeHaven</a>
+        <a class="navbar-brand" href="#">InterXAI</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <i class="fas fa-bars"></i>
         </button>
@@ -304,7 +214,7 @@
             <ul class="navbar-nav">
                 <li class="nav-item"><a class="nav-link" href="{% url 'previous_interviews' %}">Previous Interviews</a></li>
                 <li class="nav-item"><a class="nav-link" href="{% url 'interview_simulator' %}">Simple Interview</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'gc' %}">Chat</a></li>
+                <li class="nav-item"><a class="nav-link active" href="{% url 'gc' %}">Chat</a></li>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
                         More
@@ -325,37 +235,26 @@
             <input type="text" id="new-group-name" class="form-control mb-2" placeholder="Enter group name">
             <button id="create-group-btn" class="btn btn-primary w-100">Create Group</button>
         </div>
-        {% for room in rooms %}
-        <div class="room-item" data-room="{{ room.roomName }}" data-room-id="{{ room.id }}">
-            {{ room.roomName }}
+        <div id="rooms-list">
+            {% for room in rooms %}
+            <div class="room-item" data-room="{{ room.roomName }}" data-room-id="{{ room.id }}">
+                {{ room.roomName }}
+            </div>
+            {% endfor %}
         </div>
-        {% endfor %}
     </div>
 
     <div id="chat-container">
+        <div class="empty-state" id="no-chat-selected">
+            <i class="fas fa-comments"></i>
+            <p>Select a chat or create a new group to start messaging</p>
+        </div>
+        
         {% for room in rooms %}
         <div class="chat-area" data-room="{{ room.roomName }}" data-room-id="{{ room.id }}">
-            <button class="toggle-call-button" onclick="toggleCall({{ room.id }})">
-                <i class="fas fa-video"></i> Start Group Call
-            </button>
-            
-            <div class="video-call-container" id="video-container-{{ room.id }}">
-                <div class="video-grid" id="video-grid-{{ room.id }}">
-                    <!-- Video participants will be added here -->
-                </div>
-                <div class="call-controls">
-                    <button class="call-control-button" id="toggle-video-{{ room.id }}" onclick="toggleVideo({{ room.id }})">
-                        <i class="fas fa-video"></i>
-                    </button>
-                    <button class="call-control-button" id="toggle-audio-{{ room.id }}" onclick="toggleAudio({{ room.id }})">
-                        <i class="fas fa-microphone"></i>
-                    </button>
-                    <button class="call-control-button red" onclick="endCall({{ room.id }})">
-                        <i class="fas fa-phone-slash"></i>
-                    </button>
-                </div>
+            <div class="chat-header">
+                <i class="fas fa-users me-2"></i> {{ room.roomName }}
             </div>
-            
             <div class="chat-log">
                 {% for message in messages %}
                     {% if message.group.id == room.id %}
@@ -379,15 +278,10 @@
     </div>
 </div>
 
-<script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
-<script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 const currentUsername = "{{ request.user.username }}";
 const activeRooms = {};
-const peerConnections = {};
-let localStream = null;
-let myPeer = null;
-let activeCallRoom = null;
 
 // Handle group creation
 document.getElementById('create-group-btn').addEventListener('click', async () => {
@@ -400,18 +294,18 @@ document.getElementById('create-group-btn').addEventListener('click', async () =
     }
 
     try {
-        const response = await fetch('/create_group/', {
+        const response = await fetch('/gc/create/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': getCookie('csrftoken')
             },
-            body: JSON.stringify({ group_name: groupName })
+            body: JSON.stringify({ group: groupName })
         });
 
         if (response.ok) {
             const data = await response.json();
-            addNewGroup(data.room_id, groupName);
+            addNewGroup(data.group_id, groupName);
             groupNameInput.value = '';
         } else {
             alert('Failed to create group');
@@ -424,7 +318,7 @@ document.getElementById('create-group-btn').addEventListener('click', async () =
 
 function addNewGroup(roomId, roomName) {
     // Create new room item in sidebar
-    const roomsContainer = document.getElementById('rooms-sidebar');
+    const roomsList = document.getElementById('rooms-list');
     const roomItem = document.createElement('div');
     roomItem.className = 'room-item';
     roomItem.dataset.room = roomName;
@@ -435,7 +329,7 @@ function addNewGroup(roomId, roomName) {
     const chatContainer = document.getElementById('chat-container');
     const chatArea = createChatArea(roomId, roomName);
     
-    roomsContainer.appendChild(roomItem);
+    roomsList.appendChild(roomItem);
     chatContainer.appendChild(chatArea);
 
     // Initialize new chat room
@@ -445,7 +339,14 @@ function addNewGroup(roomId, roomName) {
     roomItem.addEventListener('click', () => {
         document.querySelectorAll('.room-item').forEach(el => el.classList.remove('active'));
         roomItem.classList.add('active');
+        
+        // Hide empty state
+        document.getElementById('no-chat-selected').style.display = 'none';
+        
+        // Deactivate all rooms
         Object.values(activeRooms).forEach(room => room.deactivate());
+        
+        // Activate selected room
         activeRooms[roomId].activate();
     });
 
@@ -460,26 +361,9 @@ function createChatArea(roomId, roomName) {
     chatArea.dataset.roomId = roomId;
 
     chatArea.innerHTML = `
-        <button class="toggle-call-button" onclick="toggleCall(${roomId})">
-            <i class="fas fa-video"></i> Start Group Call
-        </button>
-        
-        <div class="video-call-container" id="video-container-${roomId}">
-            <div class="video-grid" id="video-grid-${roomId}">
-            </div>
-            <div class="call-controls">
-                <button class="call-control-button" id="toggle-video-${roomId}" onclick="toggleVideo(${roomId})">
-                    <i class="fas fa-video"></i>
-                </button>
-                <button class="call-control-button" id="toggle-audio-${roomId}" onclick="toggleAudio(${roomId})">
-                    <i class="fas fa-microphone"></i>
-                </button>
-                <button class="call-control-button red" onclick="endCall(${roomId})">
-                    <i class="fas fa-phone-slash"></i>
-                </button>
-            </div>
+        <div class="chat-header">
+            <i class="fas fa-users me-2"></i> ${roomName}
         </div>
-        
         <div class="chat-log"></div>
         <form class="chat-form">
             <div class="input-container">
@@ -502,19 +386,106 @@ class ChatRoom {
         this.chatLog = this.chatArea.querySelector('.chat-log');
         this.messageInput = this.chatArea.querySelector('.chat-message-input');
         this.sendButton = this.chatArea.querySelector('.send-button');
-        this.toggleCallButton = this.chatArea.querySelector('.toggle-call-button');
-        this.videoContainer = document.getElementById(`video-container-${roomId}`);
-        this.videoGrid = document.getElementById(`video-grid-${roomId}`);
+        this.form = this.chatArea.querySelector('.chat-form');
         
-        this.isInCall = false;
-        this.localVideoEnabled = true;
-        this.localAudioEnabled = true;
-        this.peers = {};
-
         this.initializeEventListeners();
     }
 
-    // ... [Rest of the ChatRoom class implementation remains the same as in your original code]
+    initializeEventListeners() {
+        // WebSocket event handlers
+        this.socket.onopen = () => {
+            console.log(`Connected to chat room: ${this.roomName}`);
+            this.addSystemMessage('Connected to chat room');
+        };
+
+        this.socket.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            this.handleMessage(data);
+        };
+
+        this.socket.onclose = () => {
+            console.log(`Disconnected from chat room: ${this.roomName}`);
+            this.addSystemMessage('Disconnected from chat room');
+        };
+
+        // UI event handlers
+        this.sendButton.addEventListener('click', () => {
+            this.sendMessage();
+        });
+
+        this.form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.sendMessage();
+        });
+
+        this.messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                this.sendMessage();
+            }
+        });
+    }
+
+    sendMessage() {
+        const message = this.messageInput.value.trim();
+        if (!message) return;
+
+        this.socket.send(JSON.stringify({
+            'message': message,
+            'username': currentUsername,
+            'room_id': this.roomId
+        }));
+
+        this.messageInput.value = '';
+    }
+
+    handleMessage(data) {
+        if (data.type === 'chat_message') {
+            const isCurrentUser = data.username === currentUsername;
+            this.addMessage(data.message, data.username, isCurrentUser);
+        } else if (data.type === 'system_message') {
+            this.addSystemMessage(data.message);
+        }
+    }
+
+    addMessage(message, username, isSent) {
+        const messageContainer = document.createElement('div');
+        messageContainer.className = `message-container ${isSent ? 'sent' : 'received'}`;
+
+        const usernameElement = document.createElement('div');
+        usernameElement.className = 'username';
+        usernameElement.textContent = username;
+
+        const messageBubble = document.createElement('div');
+        messageBubble.className = 'message-bubble';
+        messageBubble.textContent = message;
+
+        messageContainer.appendChild(usernameElement);
+        messageContainer.appendChild(messageBubble);
+        this.chatLog.appendChild(messageContainer);
+        this.scrollToBottom();
+    }
+
+    addSystemMessage(message) {
+        const systemMessage = document.createElement('div');
+        systemMessage.className = 'system-message';
+        systemMessage.textContent = message;
+        this.chatLog.appendChild(systemMessage);
+        this.scrollToBottom();
+    }
+
+    scrollToBottom() {
+        this.chatLog.scrollTop = this.chatLog.scrollHeight;
+    }
+
+    activate() {
+        this.chatArea.classList.add('active');
+        this.scrollToBottom();
+    }
+
+    deactivate() {
+        this.chatArea.classList.remove('active');
+    }
 }
 
 // Utility function to get CSRF token
@@ -535,6 +506,15 @@ function getCookie(name) {
 
 // Initialize existing chat rooms
 document.addEventListener('DOMContentLoaded', () => {
+    // Hide all chat areas initially
+    document.querySelectorAll('.chat-area').forEach(area => {
+        area.classList.remove('active');
+    });
+    
+    // Show empty state initially
+    document.getElementById('no-chat-selected').style.display = 'flex';
+    
+    // Initialize rooms
     document.querySelectorAll('.room-item').forEach(roomElement => {
         const roomName = roomElement.dataset.room;
         const roomId = roomElement.dataset.roomId;
@@ -543,71 +523,24 @@ document.addEventListener('DOMContentLoaded', () => {
         roomElement.addEventListener('click', () => {
             document.querySelectorAll('.room-item').forEach(el => el.classList.remove('active'));
             roomElement.classList.add('active');
+            
+            // Hide empty state
+            document.getElementById('no-chat-selected').style.display = 'none';
+            
+            // Deactivate all rooms
             Object.values(activeRooms).forEach(room => room.deactivate());
+            
+            // Activate selected room
             activeRooms[roomId].activate();
         });
     });
 
-    // Activate first room by default
+    // Activate first room by default if any exists
     const firstRoomElement = document.querySelector('.room-item');
     if (firstRoomElement) {
-        const firstRoomId = firstRoomElement.dataset.roomId;
-        firstRoomElement.classList.add('active');
-        activeRooms[firstRoomId].activate();
+        firstRoomElement.click();
     }
 });
-
-// Global call control functions
-function toggleCall(roomId) {
-    const room = activeRooms[roomId];
-    if (!room) return;
-    
-    if (activeCallRoom && activeCallRoom !== room) {
-        alert('You are already in a call in another room. Please end that call first.');
-        return;
-    }
-    
-    if (!room.isInCall) {
-        room.startCall();
-    } else if (activeCallRoom === room) {
-        room.endCall();
-    } else {
-        room.joinCall();
-    }
-}
-
-function toggleVideo(roomId) {
-    if (!localStream) return;
-    
-    const videoTracks = localStream.getVideoTracks();
-    if (videoTracks.length === 0) return;
-    
-    const enabled = !videoTracks[0].enabled;
-    videoTracks[0].enabled = enabled;
-    
-    const button = document.getElementById(`toggle-video-${roomId}`);
-    button.innerHTML = `<i class="fas fa-video${enabled ? '' : '-slash'}"></i>`;
-}
-
-function toggleAudio(roomId) {
-    if (!localStream) return;
-    
-    const audioTracks = localStream.getAudioTracks();
-    if (audioTracks.length === 0) return;
-    
-    const enabled = !audioTracks[0].enabled;
-    audioTracks[0].enabled = enabled;
-    
-    const button = document.getElementById(`toggle-audio-${roomId}`);
-    button.innerHTML = `<i class="fas fa-microphone${enabled ? '' : '-slash'}"></i>`;
-}
-
-function endCall(roomId) {
-    const room = activeRooms[roomId];
-    if (room) {
-        room.endCall();
-    }
-}
 </script>
 </body>
 </html>

@@ -45,8 +45,9 @@ def analyze_resume(request):
             # Prepare Groq request
             prompt = (
                 f"Analyze the following resume for the job role '{job_role}' at the company '{company}'. "
-                f"Provide a score out of 100, a brief description, and suggestions for improvement.\n\n"
+                f"Provide a score out of 100 the score on real chances and score must be very practical and as less as possible considering real world circumstances the score must be as less as possible check wherever you can detect the score, a brief description, and suggestions for improvement.\n\n"
                 f"Resume Text:\n{resume_text}"
+            
             )
 
             chat_completion = client.chat.completions.create(

@@ -8,16 +8,16 @@ env = environ.Env(
     DEBUG=(bool, False),
     ENVIRONMENT=(str, 'production'),
     POSTGRES_LOCALLY=(bool, False),
-    REDIS_URL=(str, 'redis://localhost:6379'),
+    REDIS_URL=(str, 'redis://localhost:6380'),
     SOCIAL_AUTH_GOOGLE_OAUTH2_KEY=(str, ''),
     SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET=(str, ''),
     SECRET_KEY=(str, 'default-secret-key-for-dev'),
     DATABASE_URL=(str, ''),
-    CHANNEL_LAYERS_HOST=(str, 'redis://localhost:6379'),
+    CHANNEL_LAYERS_HOST=(str, 'redis://localhost:6380'),
     EMAIL_HOST_USER=(str, ''),
     EMAIL_HOST_PASSWORD=(str, ''),
-    CELERY_BROKER_URL=(str, 'redis://localhost:6379'),
-    CELERY_RESULT_BACKEND=(str, 'redis://localhost:6379'),
+    CELERY_BROKER_URL=(str, 'redis://localhost:6380'),
+    CELERY_RESULT_BACKEND=(str, 'redis://localhost:6380'),
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.

@@ -143,6 +143,17 @@
             cursor: pointer;
             transition: background .15s ease-in-out;
         }
+        .read-only-slider {
+            opacity: 0.7;
+            background: #eee;
+            pointer-events: none; /* Make it appear disabled visually */
+        }
+        .read-only-slider::-webkit-slider-thumb {
+            background: #999;
+        }
+        .read-only-slider::-moz-range-thumb {
+            background: #999;
+        }
         footer {
             text-align: center;
             padding: 10px;
@@ -175,6 +186,7 @@
 
             <div class="slider-container">
                 <h3 style="color: #0073b1; margin-bottom: 15px;">Skill Distribution</h3>
+                <p style="margin-bottom: 15px; color: #666;">Adjust the DSA slider to automatically set the Development weightage. Total must equal 100%.</p>
                 
                 <div class="slider-group">
                     <div class="slider-label">
@@ -189,7 +201,8 @@
                         <label for="id_Dev">Development Weightage</label>
                         <span class="slider-value" id="dev-value">50%</span>
                     </div>
-                    <input type="range" id="id_Dev" name="Dev" min="0" max="100" value="50" class="slider" disabled>
+                    <!-- Not disabled, but with class to make it look disabled -->
+                    <input type="range" id="id_Dev" name="Dev" min="0" max="100" value="50" class="slider read-only-slider">
                 </div>
             </div>
 
@@ -286,17 +299,24 @@
         const dsaValue = document.getElementById('dsa-value');
         const devValue = document.getElementById('dev-value');
 
+        // Initialize the sliders
+        updateSliders(50);
+
         dsaSlider.addEventListener('input', function() {
             const dsaVal = parseInt(this.value);
+            updateSliders(dsaVal);
+        });
+
+        function updateSliders(dsaVal) {
             const devVal = 100 - dsaVal;
             
-            // Update the dev slider
+            // Update the dev slider - it's not disabled anymore, just visually styled to look disabled
             devSlider.value = devVal;
             
             // Update the displayed values
             dsaValue.textContent = `${dsaVal}%`;
             devValue.textContent = `${devVal}%`;
-        });
+        }
 
         // Date validation
         document.getElementById('id_submissionDeadline').addEventListener('input', validateDates);
