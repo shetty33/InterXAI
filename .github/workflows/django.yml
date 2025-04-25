@@ -27,11 +27,22 @@ jobs:
             PR_NUM="0"
           fi
           
-          # Debug what we're sending
-          echo "Sending analysis request for PR #$PR_NUM"
+          # Create a JSON file to avoid escaping issues
+          echo '{
+            "repo_url": "https://github.com/${{ github.repository }}",
+            "pr_num": "'"$PR_NUM"'",
+            "github_token": "'"$GH_TOKEN"'"
+          }' > payload.json
           
-          # Use -v flag with curl to see detailed request/response info
+          # Debug the payload
+          echo "Payload contents:"
+          cat payload.json
+          
+          # Send the request with the file as payload
           curl -v -X POST "http://20.97.210.43:8000/start-task/" \
-          -H "Content-Type: application/json" \
-          -H "Authorization: token $AUTH_TOKEN" \
-          -d "{\"repo_url\":\"https://github.com/${{ github.repository }}\",\"pr_num\":\"$PR_NUM\",\"github_token\":\"$GH_TOKEN\"}"
+            -H "Content-Type: application/json" \
+            -H "Authorization: Token $AUTH_TOKEN" \
+            --data @payload.json
+            
+          # Print curl exit code for debugging
+          echo "Curl exit code: $?"
