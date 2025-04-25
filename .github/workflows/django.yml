@@ -30,8 +30,11 @@ jobs:
           # Debug what we're sending
           echo "Sending analysis request for PR #$PR_NUM"
           
-          # Use -v flag with curl to see detailed request/response info
+          # Use the correct Authorization header format for DRF
           curl -v -X POST "http://20.97.210.43:8000/start-task/" \
           -H "Content-Type: application/json" \
-          -H "Authorization: token $AUTH_TOKEN" \
-          -d "{\"repo_url\":\"https://github.com/${{ github.repository }}\",\"pr_num\":\"$PR_NUM\",\"github_token\":\"$GH_TOKEN\"}"
+          -H "Authorization: Token $AUTH_TOKEN" \
+          -d "{\"repo_url\":\"https://github.com/${{ github.repository }}\",\"pr_num\":\"$PR_NUM\",\"github_token\":\"$GH_TOKEN\"}" 2>&1 | tee curl_output.log
+          
+          # Display curl exit code
+          echo "Curl exit code: $?"
