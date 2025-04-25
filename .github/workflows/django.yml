@@ -4,39 +4,34 @@ on:
     branches:
       - main
   pull_request_target:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened] 
 jobs:
   analyze_pr:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-      
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.x'
-      
-      - name: Send POST request to analysis service
+        
+      - name: Send PR analysis request
         env:
-          # Use GitHub secrets instead of hardcoding sensitive values
+          # Store this securely in GitHub secrets
           AUTH_TOKEN: ${{ secrets.AUTH_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUBSS_TOKEN }}
+          # Use the built-in GITHUB_TOKEN for API access
+          GH_TOKEN: ${{ secrets.GITHUBSS_TOKEN }}
         run: |
-          # For PRs, extract the PR number
+          # Extract PR number from event context
           if [[ "${{ github.event_name }}" == "pull_request_target" ]]; then
             PR_NUM="${{ github.event.pull_request.number }}"
           else
-            PR_NUM="0"  # Use 0 or some indicator for push events
+            # If it's a push event, you might want to handle differently
+            PR_NUM="0"
           fi
           
-          echo "Processing event for PR #$PR_NUM"
+          # Debug what we're sending
+          echo "Sending analysis request for PR #$PR_NUM"
           
-          curl -X POST http://20.97.210.43:8000/start-task/ \
+          # Use -v flag with curl to see detailed request/response info
+          curl -v -X POST "http://20.97.210.43:8000/start-task/" \
           -H "Content-Type: application/json" \
           -H "Authorization: token $AUTH_TOKEN" \
-          -d "{
-            \"repo_url\": \"${{ github.repository_url }}\",
-            \"pr_num\": \"$PR_NUM\",
-            \"github_token\": \"$GITHUB_TOKEN\"
-          }"
+          -d "{\"repo_url\":\"https://github.com/${{ github.repository }}\",\"pr_num\":\"$PR_NUM\",\"github_token\":\"$GH_TOKEN\"}"
