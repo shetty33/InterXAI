@@ -1,34 +1,64 @@
-name: Send PR analysis request
-env:
-  AUTH_TOKEN: ${{ secrets.AUTH_TOKEN }}
-  GH_TOKEN: ${{ secrets.GITHUBSS_TOKEN }} # Fix typo if it's GITHUBSS_TOKEN
-run: |
-  if [[ "${{ github.event_name }}" == "pull_request_target" ]]; then
-    PR_NUM="${{ github.event.pull_request.number }}"
-  else
-    PR_NUM="0"
-  fi
+name: Analyze PR or Push
 
-  echo '{
-    "repo_url": "https://github.com/${{ github.repository }}",
-    "pr_num": "'"$PR_NUM"'",
-    "github_token": "'"$GH_TOKEN"'"
-  }' > payload.json
+on: 
+  push:
+    branches:
+      - main
+  pull_request_target:
+    types: [opened, synchronize, reopened]
 
-  echo "Payload contents:"
-  cat payload.json
+jobs:
+  analyze_pr:
+    runs-on: ubuntu-latest
 
-  if [[ ! -f payload.json ]]; then
-    echo "Error: payload.json not found"
-    exit 1
-  fi
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-  curl -v -X POST "http://20.97.210.43:8000/start-task/" \
-    -H "Content-Type: application/json" \
-    -H "Authorization: Token $AUTH_TOKEN" \
-    --data @payload.json || {
-      echo "Curl failed with exit code $?"
-      exit 1
-    }
+      - name: Send PR analysis request
+        env:
+          # Store this securely in GitHub secrets
+          AUTH_TOKEN: ${{ secrets.AUTH_TOKEN }}
+          # Use the built-in GITHUB_TOKEN for API access
+          GH_TOKEN: ${{ secrets.GITHUBSS_TOKEN }}
+        run: |
+          # Extract PR number from event context
+          if [[ "${{ github.event_name }}" == "pull_request_target" ]]; then
+            PR_NUM="${{ github.event.pull_request.number }}"
+          else
+            # If it's a push event, set PR_NUM to 0
+            PR_NUM="0"
+          fi
 
-  echo "Curl exit code: $?"
+          # Debugging environment variables
+          echo "Repository: ${{ github.repository }}"
+          echo "PR Number: $PR_NUM"
+          echo "GitHub Token: $GH_TOKEN"
+
+          # Create a JSON payload using jq for proper formatting
+          echo '{}' | jq --arg repo_url "https://github.com/${{ github.repository }}" \
+                         --arg pr_num "$PR_NUM" \
+                         --arg github_token "$GH_TOKEN" \
+                         '.repo_url = $repo_url | .pr_num = $pr_num | .github_token = $github_token' > payload.json
+
+          # Debug the payload file
+          echo "Payload contents:"
+          cat payload.json
+
+          # Check if the payload file exists
+          if [[ ! -f payload.json ]]; then
+            echo "Error: payload.json not found"
+            exit 1
+          fi
+
+          # Send the request using curl
+          curl -v -X POST "http://20.97.210.43:8000/start-task/" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Token $AUTH_TOKEN" \
+            --data @payload.json || {
+              echo "Curl failed with exit code $?"
+              exit 1
+            }
+
+          # Print curl exit code for debugging
+          echo "Curl exit code: $?"
