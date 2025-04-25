@@ -27,18 +27,39 @@ jobs:
             PR_NUM="0"
           fi
 
-          # Create JSON payload
+          # Debugging extracted variables
+          echo "Repository: ${{ github.repository }}"
+          echo "PR Number: $PR_NUM"
+          echo "GitHub Token (masked): ***"
+
+          # Create JSON payload using jq for proper formatting
           echo '{}' | jq --arg repo_url "https://github.com/${{ github.repository }}" \
                          --arg pr_num "$PR_NUM" \
                          --arg github_token "$GH_TOKEN" \
                          '.repo_url = $repo_url | .pr_num = $pr_num | .github_token = $github_token' > payload.json
 
-          # Debug the payload
+          # Debugging the payload
           echo "Payload contents:"
           cat payload.json
 
-          # Send the request
+          # Check if the payload file exists
+          if [[ ! -f payload.json ]]; then
+            echo "Error: payload.json not found"
+            exit 1
+          fi
+
+          # Debugging payload size
+          echo "Payload size:"
+          stat -c%s payload.json
+
+          # Send the request using curl
           curl -v -X POST "http://20.97.210.43:8000/start-task/" \
             -H "Content-Type: application/json" \
             -H "Authorization: Token $AUTH_TOKEN" \
-            --data @payload.json
+            --data-binary @payload.json || {
+              echo "Curl failed with exit code $?"
+              exit 1
+            }
+
+          # Print curl exit code for debugging
+          echo "Curl exit code: $?"
