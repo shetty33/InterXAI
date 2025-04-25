@@ -21,7 +21,7 @@ jobs:
         env:
           # Use GitHub secrets instead of hardcoding sensitive values
           AUTH_TOKEN: ${{ secrets.AUTH_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUBSS_TOKEN }}
         run: |
           # For PRs, extract the PR number
           if [[ "${{ github.event_name }}" == "pull_request_target" ]]; then
