@@ -25,7 +25,7 @@ jobs:
 
       - name: Send POST request to start analysis task
         run: |
-          curl -X POST http://127.0.0.1:8000/start-task/ \
+          curl -X POST http://20.97.210.43:8000/start-task/ \
           -H "Content-Type: application/json" \
           -H "Authorization: token $AUTH_TOKEN" \
           -d '{
