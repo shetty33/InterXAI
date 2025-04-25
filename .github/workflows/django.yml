@@ -1,35 +1,42 @@
 name: Analyze PR or Push
-
 on:
   push:
     branches:
-      - main  # Change this to the branch you want to watch (e.g., main or a feature branch)
+      - main
   pull_request_target:
-    types: [opened, synchronize, reopened]  # Triggers when PR is created, synchronized, or reopened
-
+    types: [opened, synchronize, reopened]
 jobs:
   analyze_pr:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-
-      - name: Set up Python (if needed)
+      
+      - name: Set up Python
         uses: actions/setup-python@v2
         with:
           python-version: '3.x'
-
-      - name: Set up environment variables
-        
-
-      - name: Send POST request to start analysis task
+      
+      - name: Send POST request to analysis service
+        env:
+          # Use GitHub secrets instead of hardcoding sensitive values
+          AUTH_TOKEN: ${{ secrets.AUTH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # For PRs, extract the PR number
+          if [[ "${{ github.event_name }}" == "pull_request_target" ]]; then
+            PR_NUM="${{ github.event.pull_request.number }}"
+          else
+            PR_NUM="0"  # Use 0 or some indicator for push events
+          fi
+          
+          echo "Processing event for PR #$PR_NUM"
+          
           curl -X POST http://20.97.210.43:8000/start-task/ \
           -H "Content-Type: application/json" \
           -H "Authorization: token $AUTH_TOKEN" \
-          -d '{
-            "repo_url": "https://github.com/sathwikshetty33/InterXAI",
-            "pr_num": "1",
-            "github_token": "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"
-          }'
+          -d "{
+            \"repo_url\": \"${{ github.repository_url }}\",
+            \"pr_num\": \"$PR_NUM\",
+            \"github_token\": \"$GITHUB_TOKEN\"
+          }"
