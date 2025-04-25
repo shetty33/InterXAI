@@ -1,37 +1,49 @@
-name: Analyze PR or Push
-on:
-  push:
-    branches:
-      - main
-  pull_request_target:
-    types: [opened, synchronize, reopened] 
-jobs:
-  analyze_pr:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+- name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+          
+      - name: Install requests
+        run: pip install requests
         
-      - name: Send PR analysis request
+      - name: Send analysis request with Python
         env:
-          # Store this securely in GitHub secrets
           AUTH_TOKEN: ${{ secrets.AUTH_TOKEN }}
-          # Use the built-in GITHUB_TOKEN for API access
-          GH_TOKEN: ${{ secrets.GITHUBSS_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Extract PR number from event context
-          if [[ "${{ github.event_name }}" == "pull_request_target" ]]; then
-            PR_NUM="${{ github.event.pull_request.number }}"
-          else
-            # If it's a push event, you might want to handle differently
-            PR_NUM="0"
-          fi
+          python -c "
+          import requests
+          import json
+          import os
+          import sys
           
-          # Debug what we're sending
-          echo "Sending analysis request for PR #$PR_NUM"
+          # Get PR number from GitHub event context
+          event_name = '${{ github.event_name }}'
+          pr_num = '${{ github.event.pull_request.number }}' if event_name == 'pull_request_target' else '0'
           
-          # Use -v flag with curl to see detailed request/response info
-          curl -v -X POST "http://20.97.210.43:8000/start-task/" \
-          -H "Content-Type: application/json" \
-          -H "Authorization: token $AUTH_TOKEN" \
-          -d "{\"repo_url\":\"https://github.com/${{ github.repository }}\",\"pr_num\":4,\"github_token\":\"$GH_TOKEN\"}"
+          print(f'Sending analysis request for PR #{pr_num}')
+          
+          # Prepare request data
+          data = {
+              'repo_url': 'https://github.com/${{ github.repository }}',
+              'pr_num': pr_num,
+              'github_token': os.environ.get('GH_TOKEN')
+          }
+          
+          # Send request
+          try:
+              response = requests.post(
+                  'http://20.97.210.43:8000/start-task/',
+                  headers={
+                      'Content-Type': 'application/json',
+                      'Authorization': f'token {os.environ.get(\"AUTH_TOKEN\")}'
+                  },
+                  json=data
+              )
+              print(f'Status code: {response.status_code}')
+              print(f'Response: {response.text}')
+              response.raise_for_status()
+          except Exception as e:
+              print(f'Error: {str(e)}')
+              sys.exit(1)
+          "
