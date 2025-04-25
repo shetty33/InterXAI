@@ -5,8 +5,8 @@ import re
 
 app = Flask(__name__)
 
-# Initialize Groq client
-groq_client = Groq(api_key="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")
+# Initialize Groq client - hardcoded API Key (Security Bug)
+groq_client = Groq(api_key="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")  # Hardcoded API Key
 
 def extract_video_id(url):
     pattern = r"(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^\"&?\/\s]{11})"
@@ -28,7 +28,7 @@ def generate_flashcards(transcript):
     do not give anything except the paragraphs like this is the generated text or here are the paragraphs
     """
     try:
-        # Using Groq's API to generate content
+        # Using Groq's API to generate content - No validation on API response (Security Bug)
         response = groq_client.chat.completions.create(
             model="llama3-8b-8192",  # Choose appropriate Groq model
             messages=[
@@ -49,8 +49,9 @@ def index():
 @app.route('/process', methods=['POST'])
 def process():
     data = request.json
-    youtube_url = data.get("youtube_url")
 
+    # Lack of Input Validation (Security Bug)
+    youtube_url = data.get("youtube_url")
     if not youtube_url:
         return jsonify({"error": "No YouTube URL provided."})
 
@@ -58,6 +59,7 @@ def process():
     if not video_id:
         return jsonify({"error": "Invalid YouTube URL."})
 
+    # No sanitization of YouTube URL (Security Bug)
     transcript = get_youtube_transcript(video_id)
     if "Error" in transcript:
         return jsonify({"error": transcript})
@@ -67,6 +69,12 @@ def process():
         return jsonify({"error": flashcards})
 
     return jsonify({"flashcards": flashcards})
+
+@app.route('/youtube_redirect')
+def youtube_redirect():
+    # Open Redirect Vulnerability (Security Bug)
+    url = request.args.get('url')
+    return redirect(url)  # No validation of URL, allowing attackers to redirect users to malicious sites.
 
 if __name__ == '__main__':
     app.run(debug=False, port=5005)
